@@ -1,51 +1,49 @@
-# valcloud
-Validation Cloud Take Home Challenge
+# Simple Eth Geth Beacon
+Single Eth Geth Beacon Deployment (modified by me for demo purposes outside of original spec)
 
-### Part 1 - Template the deployment of an Ethereum Mainnet Node
+### Ethereum Mainnet Node
 
-(A) The node should be deployed using the following clients: 
+(A) The node should is deployed using the following clients: 
 
 - Execution Client = Geth
 - Consensus Client = Prysm
 
-Note: the node does NOT need to be fully sync’d, only evidence of it properly syncing
-
-(B) The node should be monitored using:
+(B) The node should is monitored using:
 
 - Prometheus
 - Grafana
+- Loki
 
-Evidence of Beacon properly syncing:
+Beacon Syncing:
 ![image](https://github.com/mdr0id/valcloud/assets/36639405/bfd467dd-5777-48f2-8360-c304e9777d16)
 
 Geth finding Peers on syncing:
 ![image](https://github.com/mdr0id/valcloud/assets/36639405/7d0ccf7f-6698-442f-b820-e6b22181ffb4)
 
-### Part 2 - Monitor the Connected Peers
+### Go Exporter
 
-Write a Go program that consistently outputs a list of the execution client’s connected peers.
+Sample Go program that consistently outputs a list of the execution client’s connected peers.
 
-Evidence of geth_peer_exporter:
+geth_peer_exporter find valid peers:
 ![image](https://github.com/mdr0id/valcloud/assets/36639405/b52db156-c7ab-4e4a-8885-0026e82bf0bf)
 
 ## Setup
-🔥 ⚠️ **This is intended for demo use only and not production environments. For example, it uses self signed certs for GRPC.** ⚠️ 🔥
+🔥 ⚠️ **This is intended for demo use only and not production environments. For example, it uses self signed certs for GRPC. If used in production please use a valid certificate generation with domain host etc.** ⚠️ 🔥
 
-#### Part 1:
+#### Initial Setup:
 
 1. Ensure your system has Docker installed: https://docs.docker.com/engine/install/
 2. Ensure your system has Docker Compose installed: https://docs.docker.com/compose/install/
 3. Install loki plugin: `docker plugin install  grafana/loki-docker-driver:latest --alias loki --grant-all-permissions`
 
-To start (from within valcloud repo):
+To start (from within eth_geth_beacon repo):
 
-(configure volumes for valcloud platform; within valcloud repo)
+(configure volumes for Eth Geth platform; within eth_geth_beacon repo)
 1. `sudo ./setup.sh`
 
 *⚠️NOTE: If you create different volumes/users you need to modify the prometheus and grafana services accordingly in docker-compose.yaml⚠️*
 
-Once volumes are configured for your platform:
-
+## If you have all the requires software and want to use the defualt env/volumes
 1. `docker compose up -d`
 2. Sanity check the services/network are running gracefully per your envinronment: `docker compose ps`
 ![image](https://github.com/mdr0id/valcloud/assets/36639405/45e8618c-50b7-4527-bb1d-d08d245def7b)
@@ -54,10 +52,6 @@ Once volumes are configured for your platform:
 5. Navigate to http://localhost:9090 for Prometheus
 6. If you are not seeing proper connections, ensure the expected ports are setup correctly per your platform:
 `sudo ./setup-network.sh`
-
-#### Part 2:
-
-The geth_peer_exporter container is withing the docker-compose.yaml, so it will run when you issued the above `docker compose up -d`
 
 ##### Environment Version (e.g. works on my machine 🤓)
 
@@ -107,12 +101,7 @@ Design Process:
 3. Determine what configs and volumes each docker image needs
 4. Draft the templated and spin up each container
 5. Review logs to fix/resolve bugs in logging
-
-Technology choices:
-1. Docker is widely used
-2. Docker compose is often used for these deployments and scales well in cloud/prod environments
-3. Loki is used to help correlate logs and other monitoring
-4. json rpcs go package to simplify down some of the over the wire translations from http calls into Geth
+6. Since these are not validation nodes and do not have addrs this is intended to not scale up, but is possible
 
 Security Considerations:
 1. Grafana is open; needs proper password etc but simplifies debugging
@@ -124,11 +113,10 @@ Security Considerations:
 7. Some containers would need DoS protection if the ports allowed flooding or maybe a back off algorithm
 
 Future Improvements for Production
-1. Ideally each service or binary deployed should have a config to aid deployment production
-2. Some of the ideas mentioned in Security Considerations would need to be upheld
-3. Proper hardware and resources would need to be allocated to ensure the services were reliable (e.g. so nodes don't get slashed etc)
-4. If the services deployed required keys for validator wallets, then additional steps would be needed to ensure these are done proper so funds are not lost on mainnet
-5. Proper alerts would be needed to ensure alert manager informed node operators
+1. Proper TLS cert process as noted above
+2. Baseline requirements for each beacon node machine to ensure money properly used in cloud
+3. Again since these don't have addrs and are not validating, there is NO economic insentive to spin these up at scale to fill disk
+4. If validators or addrs were implemented, proper terraform, addr generation, and machine configuration tooling would be needed.
 
 
 
