@@ -8,24 +8,27 @@ Single Eth Geth Beacon Deployment (modified by me for demo purposes outside of o
 - Execution Client = Geth
 - Consensus Client = Prysm
 
-(B) The node should is monitored using:
+(B) The node is monitored using:
 
 - Prometheus
 - Grafana
 - Loki
 
 Beacon Syncing:
-![image](https://github.com/mdr0id/valcloud/assets/36639405/bfd467dd-5777-48f2-8360-c304e9777d16)
+![beaconsync](https://github.com/mdr0id/eth_geth_beacon/assets/36639405/a6316240-75b4-45f0-adc1-3aa86f2271f7)
+
 
 Geth finding Peers on syncing:
-![image](https://github.com/mdr0id/valcloud/assets/36639405/7d0ccf7f-6698-442f-b820-e6b22181ffb4)
+![geth](https://github.com/mdr0id/eth_geth_beacon/assets/36639405/b1f385bf-a3e4-495f-bc8e-f5cc42e416b5)
+
 
 ### Go Exporter
 
 Sample Go program that consistently outputs a list of the execution client’s connected peers.
 
 geth_peer_exporter find valid peers:
-![image](https://github.com/mdr0id/valcloud/assets/36639405/b52db156-c7ab-4e4a-8885-0026e82bf0bf)
+![lokipeer](https://github.com/mdr0id/eth_geth_beacon/assets/36639405/956cdabc-bcea-477f-9bcc-c87cee18d70e)
+
 
 ## Setup
 🔥 ⚠️ **This is intended for demo use only and not production environments. For example, it uses self signed certs for GRPC. If used in production please use a valid certificate generation with domain host etc.** ⚠️ 🔥
