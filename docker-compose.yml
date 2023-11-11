@@ -1,0 +1,136 @@
+version: "3.8"
+
+services:
+
+  geth:
+    image: ethereum/client-go:${GETH_DOCKER_TAG}
+    hostname: geth
+    networks:
+      - backend
+    restart: always
+    command: --http --http.port 8552 --http.addr=0.0.0.0 --http.vhosts "geth" --authrpc.vhosts "geth" --authrpc.addr 0.0.0.0 --authrpc.jwtsecret /var/lib/jwtsecret/jwt.hex --http.api db,eth,net,web3,personal,admin 
+    stop_grace_period: 5m
+    ports:
+      - 30303:30303/tcp
+      - 30303:30303/udp
+      - ${BEACON_API_IP}:8551:8551
+    volumes:
+      - ./data/geth:/root/.ethereum
+      - /var/lib/jwtsecret/jwt.hex:/var/lib/jwtsecret/jwt.hex
+    logging:
+      driver: loki
+      options:
+        loki-url: 'http://localhost:3100/api/prom/push'
+        loki-retries: "3"
+
+  beacon:
+    image: gcr.io/prysmaticlabs/prysm/beacon-chain:${PRYSM_DOCKER_TAG}
+    networks:
+      - backend
+    restart: always
+    hostname: beacon-chain
+    depends_on:
+      - geth
+    command: --config-file=/config/beacon.yaml
+    ports:
+      - ${BEACON_API_IP}:4000:4000
+      - 13000:13000/tcp
+      - 12000:12000/udp
+    volumes:
+      - ./config/prysm/beacon.yaml:/config/beacon.yaml
+      - ./config/prysm/beacon.pem:/config/beacon.pem
+      - ./config/prysm/beacon.key:/config/beacon.key
+      - ./data/prysm/beacon-slasher:/data
+      - /var/lib/jwtsecret/jwt.hex:/config/jwtsecret/jwt.hex
+    logging:
+      driver: loki
+      options:
+        loki-url: 'http://localhost:3100/api/prom/push'
+        loki-retries: "3"
+
+  prometheus:
+    image: prom/prometheus:${PROMETHEUS_DOCKER_TAG}
+    networks:
+      - backend
+    user: "2000"
+    restart: on-failure
+    hostname: prometheus
+    command: --storage.tsdb.retention.time=31d --config.file=/etc/prometheus/prometheus.yml
+    ports:
+      - ${BEACON_API_IP}:9090:9090
+    volumes:
+      - ./config/prometheus/prometheus.yaml:/etc/prometheus/prometheus.yml
+      - ./data/prometheus:/prometheus
+    logging:
+      driver: loki
+      options:
+        loki-url: 'http://localhost:3100/api/prom/push'
+        loki-retries: "3"
+
+  grafana:
+    image: grafana/grafana:${GRAFANA_DOCKER_TAG}
+    networks:
+      - backend
+    restart: on-failure
+    hostname: grafana
+    user: "2000"
+    depends_on:
+      - prometheus
+    ports:
+      - ${BEACON_API_IP}:3000:3000
+    volumes:
+      - ./config/grafana/provisioning:/etc/grafana/provisioning
+      - ./data/grafana:/var/lib/grafana
+      - ./config/grafana/grafana.ini:/etc/grafana/grafana.ini:ro
+    environment:
+      GF_RENDERING_SERVER_URL: http://renderer:8082/render
+      GF_RENDERING_CALLBACK_URL: http://grafana:3000
+    logging:
+      driver: loki
+      options:
+        loki-url: 'http://localhost:3100/api/prom/push'
+        loki-retries: "3"
+
+  node-exporter:
+    image: prom/node-exporter:${PROMETHEUS_NODE_EXPORTER_DOCKER_TAG}
+    networks:
+      - backend
+    user: "2000"
+    hostname: node-exporter
+    logging:
+      driver: loki
+      options:
+        loki-url: 'http://localhost:3100/api/prom/push'
+        loki-retries: "3"
+
+  geth_peer_exporter:
+    image: geth_peer_exporter
+    networks:
+      - backend
+    build: ./src/geth_peer
+    hostname: geth_peer_exporter
+    logging:
+      driver: loki
+      options:
+        loki-url: 'http://localhost:3100/api/prom/push'
+        loki-retries: "3"
+
+  loki:
+    image: grafana/loki
+    networks:
+      - backend
+    ports:
+      - '3100:3100'
+    command: -config.file=/etc/loki/local-config.yaml
+    logging:
+      driver: loki
+      options:
+        loki-url: 'http://localhost:3100/api/prom/push'
+        loki-retries: "3"
+        no-file: "false"
+        keep-file: "true"
+
+networks:
+  backend:
+
+# EOF

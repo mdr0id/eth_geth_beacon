@@ -1,0 +1,45 @@
+############################################################
+##
+## Details on config
+## https://docs.prylabs.network/docs/prysm-usage/parameters/
+## https://docs.prylabs.network/docs/prysm-usage/secure-grpc
+## https://docs.prylabs.network/docs/execution-node/authentication
+##
+## WARNING: DO NOT use in production; this is for demo and using 
+## self signed cert
+##
+############################################################
+
+accept-terms-of-use: true
+
+datadir: /data
+jwt-secret: /config/jwtsecret/jwt.hex
+
+# WARNING THESE ARE SELF SIGNED CERTS FOR DEMO ONLY
+tls-cert: /config/beacon.pem
+tls-key: /config/beacon.key
+
+#######################
+# Connectivity settings 
+p2p-host-ip: ""
+p2p-host-dns: ""
+
+rpc-host: 0.0.0.0
+monitoring-host: 0.0.0.0
+
+grpc-gateway-host: 0.0.0.0
+grpc-gateway-port: 3500
+eth-api-port: 3501
+
+# disable scan of local network
+p2p-denylist: ["private"]
+
+# changing this also needs to be changed in docker-compose.yaml!
+p2p-tcp-port: 13000
+
+p2p-max-peers: 100
+
+##############################
+# Connection to geth container
+execution-endpoint: http://geth:8551
+
